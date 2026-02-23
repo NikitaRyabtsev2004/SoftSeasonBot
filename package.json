@@ -1,0 +1,27 @@
+{
+  "name": "tg-shop-miniapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grammyjs/menu": "^1.3.1",
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "node-cron": "^4.2.1",
+    "sqlite3": "^5.1.7",
+    "telegraf": "^4.16.3",
+    "telegram": "^2.26.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.1.4"
+  }
+}
