@@ -1,164 +1,91 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Menu, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
+const API = '/api';
+
 function App() {
-  const [promotions, setPromotions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [promoIndex, setPromoIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [currentCategory, setCurrentCategory] = useState(null);
 
-  const tg = window.Telegram?.WebApp;
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [promosRes, catsRes] = await Promise.all([
-        axios.get('/api/promotions'),
-        axios.get('/api/categories')
-      ]);
-
-      // ✅ БЕЗОПАСНО!
-      setPromotions(Array.isArray(promosRes.data?.data) ? promosRes.data.data : []);
-      setCategories(Array.isArray(catsRes.data?.data) ? catsRes.data.data : []);
-    } catch (error) {
-      console.error('❌ Load data error:', error);
-      setPromotions([]);
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    axios.get(`${API}/categories`).then(r => setCategories(r.data));
+    axios.get(`${API}/products`).then(r => setProducts(r.data));
   }, []);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      const params = { page };
-      if (selectedCategory) params.category = selectedCategory;
+  const loadByCategory = (cat) => {
+    setCurrentCategory(cat);
+    axios.get(`${API}/products${cat ? `?category=${cat}` : ''}`)
+      .then(r => setProducts(r.data));
+  };
 
-      const res = await axios.get('/api/products', { params });
-      setProducts(Array.isArray(res.data?.data?.products) ? res.data.data.products : []);
-      setTotalPages(res.data?.data?.pagination?.totalPages || 1);
-    } catch (error) {
-      console.error('❌ Load products error:', error);
-      setProducts([]);
-      setTotalPages(1);
-    }
-  }, [page, selectedCategory]);
+  // обработчик покадрового просмотра
+  const handleMouseMove = (e, product) => {
+    if (!product.img || product.img.length <= 1) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = x / rect.width;
+    const index = Math.floor(percent * product.img.length);
+    e.currentTarget.querySelector('img').src = product.img[index];
+  };
 
-  useEffect(() => {
-    if (tg) {
-      tg.MainButton.setText('🛒 Оформить').show();
-      tg.expand();
-    }
-    loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
-
-  if (loading) {
-    return (
-      <div className="app loading-screen">
-        <div className="spinner">⏳ Загрузка...</div>
-      </div>
-    );
-  }
+  const handleMouseLeave = (e, product) => {
+    e.currentTarget.querySelector('img').src = product.img[0];
+  };
 
   return (
-    <div className="app">
-      <header className="header">
-        <Menu size={24} />
-        <h1>🛒 Магазин</h1>
-        <div className="cart">🛒 0</div>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <header className="sticky top-0 bg-white shadow p-3 text-center font-semibold text-lg">
+        Каталог товаров
       </header>
 
-      {/* ✅ ПОЛНАЯ ЗАЩИТА ОТ .map() */}
-      {Array.isArray(promotions) && promotions.length > 0 && (
-        <section className="promotions">
-          <div className="carousel">
-            <div className="slides" style={{ transform: `translateX(-${promoIndex * 100}%)` }}>
-              {promotions.map(promo => (
-                <div key={promo.id} className="slide">
-                  <img src={promo.image} alt={promo.title} />
-                  <div className="slide-text">{promo.title}</div>
-                </div>
-              ))}
+      <div className="flex overflow-x-auto gap-3 py-3">
+        <button
+          onClick={() => loadByCategory(null)}
+          className={`px-3 py-1 rounded-full border ${!currentCategory ? 'bg-blue-600 text-white' : 'bg-white'}`}>
+          Все
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => loadByCategory(cat)}
+            className={`px-3 py-1 rounded-full border whitespace-nowrap ${currentCategory === cat ? 'bg-blue-600 text-white' : 'bg-white'}`}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {products.map(prod => (
+          <div key={prod.id} className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-md transition relative">
+            <div
+              className="relative w-full h-98 overflow-hidden cursor-ew-resize"
+              onMouseMove={(e) => handleMouseMove(e, prod)}
+              onMouseLeave={(e) => handleMouseLeave(e, prod)}
+            >
+              <img
+                src={prod.img?.[0]}
+                alt={prod.title}
+                className="w-full h-full object-cover transition-transform"
+              />
+
+              {prod.imgM && (
+                <img
+                  src={prod.imgM}
+                  className="absolute bottom-2 right-2 w-12 h-12 rounded-full border-2 border-white object-cover opacity-90"
+                  alt="Ткань"
+                />
+              )}
             </div>
-            <button
-              className="nav left"
-              onClick={() => setPromoIndex(Math.max(0, promoIndex - 1))}
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              className="nav right"
-              onClick={() => setPromoIndex(Math.min(promotions.length - 1, promoIndex + 1))}
-            >
-              <ChevronRight />
-            </button>
+            <div className="p-3">
+              <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5em]">{prod.title}</h3>
+              <p className="text-xs text-gray-500 line-clamp-2 mt-1">{prod.desc}</p>
+              <div className="mt-2 font-bold text-blue-700">{prod.price.toLocaleString()} ₽</div>
+            </div>
           </div>
-        </section>
-      )}
-
-      {Array.isArray(categories) && categories.length > 0 && (
-        <section className="categories">
-          <h2>Категории</h2>
-          <div className="category-grid">
-            {categories.map(category => (
-              <button
-                key={category.id}
-                className={selectedCategory === category.id ? 'active' : ''}
-                onClick={() => {
-                  setSelectedCategory(selectedCategory === category.id ? null : category.id);
-                  setPage(1);
-                }}
-              >
-                {category.name}
-                <span>{category.product_count}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="products">
-        <div className="product-grid">
-          {Array.isArray(products) && products.length > 0 ? (
-            products.map(product => (
-              <div key={product.id} className="product">
-                <img src={product.image} alt={product.name} />
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <div className="price">{product.price?.toLocaleString()}₽</div>
-                  <button>В корзину</button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="empty">Товары загрузятся через секунду...</div>
-          )}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="pagination">
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-              ← Назад
-            </button>
-            <span>{page} / {totalPages}</span>
-            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-              Вперед →
-            </button>
-          </div>
-        )}
-      </section>
-
-      <footer>© 2026 Мой магазин</footer>
+        ))}
+      </div>
     </div>
   );
 }
