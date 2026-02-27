@@ -1,93 +1,166 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import './App.css';
+import { useEffect } from 'react';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline, Box } from '@mui/material';
+import { Toaster } from 'sonner';
+import { store } from './store/store';
+import { loadCart, selectCartItems } from './store/cartSlice';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Cart from './components/Cart';
+import Home from './pages/Home';
+import About from './pages/About';
+import Delivery from './pages/Delivery';
+import Payment from './pages/Payment';
+import Return from './pages/Return';
 
-const API = '/api';
+const theme = createTheme({
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#2c3e50',
+            light: '#34495e',
+            dark: '#1a252f',
+            contrastText: '#ffffff',
+        },
+        secondary: {
+            main: '#e67e22',
+            light: '#f39c12',
+            dark: '#d35400',
+            contrastText: '#ffffff',
+        },
+        background: {
+            default: '#f8f9fa',
+            paper: '#ffffff',
+        },
+        text: {
+            primary: '#2c3e50',
+            secondary: '#7f8c8d',
+        },
+        divider: '#ecf0f1',
+    },
+    typography: {
+        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+        h1: {
+            fontSize: '2.5rem',
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+        },
+        h2: {
+            fontSize: '2rem',
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+        },
+        h3: {
+            fontSize: '1.75rem',
+            fontWeight: 600,
+        },
+        h4: {
+            fontSize: '1.5rem',
+            fontWeight: 600,
+        },
+        h5: {
+            fontSize: '1.25rem',
+            fontWeight: 600,
+        },
+        h6: {
+            fontSize: '1rem',
+            fontWeight: 600,
+        },
+        button: {
+            textTransform: 'none',
+            fontWeight: 600,
+        },
+    },
+    shape: {
+        borderRadius: 12,
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 8,
+                    padding: '10px 24px',
+                },
+            },
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    borderRadius: 16,
+                },
+            },
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 16,
+                },
+            },
+        },
+    },
+});
+
+function AppContent() {
+    const dispatch = useDispatch();
+    const cartItems = useSelector(selectCartItems);
+
+    useEffect(() => {
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+            try {
+                dispatch(loadCart(JSON.parse(savedCart)));
+            } catch (e) {
+                console.error('Error loading cart:', e);
+            }
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+    }, [cartItems]);
+
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                toastOptions={{
+                    style: {
+                        fontFamily: theme.typography.fontFamily,
+                    },
+                }}
+            />
+            <Router>
+                <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                    <Header />
+                    <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default' }}>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/delivery" element={<Delivery />} />
+                            <Route path="/payment" element={<Payment />} />
+                            <Route path="/return" element={<Return />} />
+                        </Routes>
+                    </Box>
+                    <Footer />
+                    <Cart />
+                </Box>
+            </Router>
+        </ThemeProvider>
+    );
+}
 
 function App() {
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [currentCategory, setCurrentCategory] = useState(null);
-
-  useEffect(() => {
-    axios.get(`${API}/categories`).then(r => setCategories(r.data));
-    axios.get(`${API}/products`).then(r => setProducts(r.data));
-  }, []);
-
-  const loadByCategory = (cat) => {
-    setCurrentCategory(cat);
-    axios.get(`${API}/products${cat ? `?category=${cat}` : ''}`)
-      .then(r => setProducts(r.data));
-  };
-
-  // обработчик покадрового просмотра
-  const handleMouseMove = (e, product) => {
-    if (!product.img || product.img.length <= 1) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percent = x / rect.width;
-    const index = Math.floor(percent * product.img.length);
-    e.currentTarget.querySelector('img').src = product.img[index];
-  };
-
-  const handleMouseLeave = (e, product) => {
-    e.currentTarget.querySelector('img').src = product.img[0];
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <header className="sticky top-0 bg-white shadow p-3 text-center font-semibold text-lg">
-        Каталог товаров
-      </header>
-
-      <div className="flex overflow-x-auto gap-3 py-3">
-        <button
-          onClick={() => loadByCategory(null)}
-          className={`px-3 py-1 rounded-full border ${!currentCategory ? 'bg-blue-600 text-white' : 'bg-white'}`}>
-          Все
-        </button>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => loadByCategory(cat)}
-            className={`px-3 py-1 rounded-full border whitespace-nowrap ${currentCategory === cat ? 'bg-blue-600 text-white' : 'bg-white'}`}>
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {products.map(prod => (
-          <div key={prod.id} className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-md transition relative">
-            <div
-              className="relative w-full h-98 overflow-hidden cursor-ew-resize"
-              onMouseMove={(e) => handleMouseMove(e, prod)}
-              onMouseLeave={(e) => handleMouseLeave(e, prod)}
-            >
-              <img
-                src={prod.img?.[0]}
-                alt={prod.title}
-                className="w-full h-full object-cover transition-transform"
-              />
-
-              {prod.imgM && (
-                <img
-                  src={prod.imgM}
-                  className="absolute bottom-2 right-2 w-12 h-12 rounded-full border-2 border-white object-cover opacity-90"
-                  alt="Ткань"
-                />
-              )}
-            </div>
-            <div className="p-3">
-              <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.5em]">{prod.title}</h3>
-              <p className="text-xs text-gray-500 line-clamp-2 mt-1">{prod.desc}</p>
-              <div className="mt-2 font-bold text-blue-700">{prod.price.toLocaleString()} ₽</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    return (
+        <Provider store={store}>
+            <AppContent />
+        </Provider>
+    );
 }
 
 export default App;

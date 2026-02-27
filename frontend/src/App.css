@@ -1,0 +1,167 @@
+/* Плавная прокрутка */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Анимация для бургер-меню */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Скрытие скроллбара для категорий */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Анимация для материала при зажатии */
+.material-circle {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.material-circle:active {
+  transform: scale(2.5);
+  z-index: 50;
+}
+
+/* Улучшенная анимация для карточек товаров */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Плавное появление модальных окон */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Улучшенный touch для мобильных */
+@media (hover: none) and (pointer: coarse) {
+  /* Убираем hover эффекты на мобильных */
+  .hover\:shadow-xl:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+
+  /* Увеличиваем область нажатия */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Индикатор загрузки изображений */
+.product-main-img {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.product-main-img[src] {
+  background: none;
+  animation: none;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Улучшенная тень для карточек */
+.shadow-card {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-card:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Стили для корзины на мобильных */
+@media (max-width: 640px) {
+  .cart-modal {
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* Плавная анимация для счетчика корзины */
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.cart-badge {
+  animation: bounce 0.3s ease;
+}
+
+/* Улучшенные переходы */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Стили для индикаторов изображений */
+.image-indicator {
+  transition: all 0.2s ease;
+}
+
+/* Градиент для кнопок */
+.gradient-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+}
+
+.gradient-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+.gradient-button:active {
+  transform: translateY(0);
+}
