@@ -22,6 +22,9 @@ import {
 } from '@mui/material';
 import {
     Close as CloseIcon,
+    TouchApp as TouchAppIcon,
+    NavigateNext as NavigateNextIcon,
+    NavigateBefore as NavigateBeforeIcon,
 } from '@mui/icons-material';
 import {
     selectPaginatedProducts,
@@ -57,6 +60,8 @@ function Home() {
 
     const [activeStep, setActiveStep] = useState(0);
     const [isPressing, setIsPressing] = useState(false);
+    const [galleryOpen, setGalleryOpen] = useState(false); // ДОБАВИТЬ - для полноэкранной галереи
+    const [galleryIndex, setGalleryIndex] = useState(0);
     const pressTimer = useRef(null);
     const touchStartX = useRef(0);
 
@@ -150,6 +155,45 @@ function Home() {
         setActiveStep(idx);
     };
 
+    const openGallery = (index) => {
+        setGalleryIndex(index);
+        setGalleryOpen(true);
+    };
+
+    // ДОБАВИТЬ: закрыть галерею
+    const closeGallery = () => {
+        setGalleryOpen(false);
+    };
+
+    // ДОБАВИТЬ: следующее фото
+    const nextImage = (e) => {
+        e?.stopPropagation();
+        if (selectedProduct?.img) {
+            setGalleryIndex((prev) => (prev + 1) % selectedProduct.img.length);
+        }
+    };
+
+    // ДОБАВИТЬ: предыдущее фото
+    const prevImage = (e) => {
+        e?.stopPropagation();
+        if (selectedProduct?.img) {
+            setGalleryIndex((prev) => (prev - 1 + selectedProduct.img.length) % selectedProduct.img.length);
+        }
+    };
+
+    // ДОБАВИТЬ: обработка свайпа для галереи
+    const handleGalleryTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleGalleryTouchEnd = (e) => {
+        const diff = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) nextImage();
+            else prevImage();
+        }
+    };
+
     return (
         <>
             {/* Categories */}
@@ -233,6 +277,7 @@ function Home() {
                             {products.map((product) => (
                                 <Card
                                     key={product.id}
+                                    onClick={() => dispatch(setSelectedProduct(product))}
                                     sx={{
                                         height: '100%',
                                         display: 'flex',
@@ -258,13 +303,13 @@ function Home() {
                                         onMouseLeave={(e) => handleMouseLeave(e, product)}
                                         onTouchStart={handleTouchStart}
                                         onTouchMove={(e) => handleTouchMove(e, product)}
-                                        onClick={() => dispatch(setSelectedProduct(product))}
                                     >
                                         <CardMedia
                                             component="img"
                                             image={product.img?.[0]}
                                             alt={product.title}
                                             className="product-main-img"
+                                            onClick={(e) => e.stopPropagation()}
                                             sx={{
                                                 position: 'absolute',
                                                 top: 0,
@@ -307,29 +352,60 @@ function Home() {
 
                                         {/* Material circle - зажатие */}
                                         {product.imgM && (
-                                            <Avatar
-                                                src={product.imgM}
-                                                alt="Материал"
+                                            <Box
                                                 sx={{
                                                     position: 'absolute',
                                                     bottom: 12,
                                                     right: 12,
-                                                    width: 44,
-                                                    height: 44,
-                                                    border: '3px solid white',
-                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                                    cursor: 'pointer',
-                                                    userSelect: 'none',
-                                                    WebkitTouchCallout: 'none',
-                                                    WebkitUserSelect: 'none',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: 0.5,
                                                 }}
-                                                onMouseDown={(e) => handleMaterialPressStart(e, product.imgM)}
-                                                onMouseUp={handleMaterialPressEnd}
-                                                onMouseLeave={handleMaterialPressEnd}
-                                                onTouchStart={(e) => handleMaterialPressStart(e, product.imgM)}
-                                                onTouchEnd={handleMaterialPressEnd}
-                                                onContextMenu={(e) => e.preventDefault()}
-                                            />
+                                            >
+                                                {/* Подсказка "Зажмите" */}
+                                                <Box
+                                                    sx={{
+                                                        bgcolor: 'rgba(0,0,0,0.7)',
+                                                        color: 'white',
+                                                        px: 1,
+                                                        py: 0.3,
+                                                        borderRadius: 1,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 600,
+                                                        whiteSpace: 'nowrap',
+                                                        backdropFilter: 'blur(4px)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 0.3,
+                                                    }}
+                                                >
+                                                    <TouchAppIcon sx={{ fontSize: 10 }} />
+                                                    Зажмите
+                                                </Box>
+
+                                                <Avatar
+                                                    src={product.imgM}
+                                                    alt="Материал"
+                                                    sx={{
+                                                        width: 44,
+                                                        height: 44,
+                                                        border: '3px solid white',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                                        cursor: 'pointer',
+                                                        userSelect: 'none',
+                                                        WebkitTouchCallout: 'none',
+                                                        WebkitUserSelect: 'none',
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onMouseDown={(e) => handleMaterialPressStart(e, product.imgM)}
+                                                    onMouseUp={handleMaterialPressEnd}
+                                                    onMouseLeave={handleMaterialPressEnd}
+                                                    onTouchStart={(e) => handleMaterialPressStart(e, product.imgM)}
+                                                    onTouchEnd={handleMaterialPressEnd}
+                                                    onContextMenu={(e) => e.preventDefault()}
+                                                />
+                                            </Box>
                                         )}
                                     </Box>
 
@@ -352,7 +428,6 @@ function Home() {
 
                                         <Typography
                                             variant="body2"
-                                            color="text.secondary"
                                             sx={{
                                                 display: '-webkit-box',
                                                 WebkitLineClamp: 2,
@@ -360,12 +435,13 @@ function Home() {
                                                 overflow: 'hidden',
                                                 mb: 1.5,
                                                 flexGrow: 1,
+                                                fontWeight: '400',
                                                 fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                             }}
                                         >
                                             {product.desc || 'Нажмите для подробностей'}
                                         </Typography>
-
+                                        <p style={{ fontSize: "12px", color: "#303030a9" }}>нажмите чтобы перейти к товару</p>
                                         <Box sx={{ mt: 'auto' }}>
                                             <Typography variant="h6" color="primary.main" fontWeight={800} gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                                                 {product.price.toLocaleString()} ₽
@@ -477,13 +553,37 @@ function Home() {
                                 <Box>
                                     {/* Основное фото - БОЛЬШОЕ с фиксированной высотой */}
                                     <Box
+                                        onClick={() => openGallery(activeStep)}
                                         sx={{
-                                            width: '85%',
-                                            height: '7%',
+                                            width: '100%',
+                                            aspectRatio: '3/4',
                                             bgcolor: 'grey.50',
                                             borderRadius: 3,
                                             overflow: 'hidden',
                                             position: 'relative',
+                                            cursor: 'zoom-in',
+                                            '&:hover::after': {
+                                                content: '"🔍 Нажмите для увеличения"',
+                                                position: 'absolute',
+                                                bottom: 16,
+                                                left: '50%',
+                                                transform: 'translateX(-50%)',
+                                                bgcolor: 'rgba(0,0,0,0.7)',
+                                                color: 'white',
+                                                px: 2,
+                                                py: 0.5,
+                                                borderRadius: 2,
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                pointerEvents: 'none',
+                                                opacity: { xs: 1, md: 0 },
+                                                transition: 'opacity 0.2s',
+                                            },
+                                            '&:hover': {
+                                                '&::after': {
+                                                    opacity: 1,
+                                                },
+                                            },
                                         }}
                                     >
                                         <img
@@ -493,6 +593,7 @@ function Home() {
                                                 width: '100%',
                                                 height: '100%',
                                                 objectFit: 'cover',
+                                                transition: 'transform 0.3s',
                                             }}
                                         />
                                     </Box>
@@ -543,20 +644,10 @@ function Home() {
 
                                 {/* Правая колонка - Информация */}
                                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    {/* Цена */}
-                                    <Typography
-                                        variant="h3"
-                                        color="primary.main"
-                                        fontWeight={800}
-                                        gutterBottom
-                                        sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' } }}
-                                    >
-                                        {selectedProduct.price?.toLocaleString()} ₽
-                                    </Typography>
 
                                     {/* Материал - клик */}
                                     {selectedProduct.imgM && (
-                                        <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
+                                        <Box sx={{ mb: 3, mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
                                             <Typography variant="subtitle2" color="text.secondary" gutterBottom fontWeight={600}>
                                                 Материал (нажмите для увеличения):
                                             </Typography>
@@ -590,6 +681,17 @@ function Home() {
                                             </Box>
                                         </Box>
                                     )}
+
+                                    {/* Цена */}
+                                    <Typography
+                                        variant="h3"
+                                        color="primary.main"
+                                        fontWeight={800}
+                                        gutterBottom
+                                        sx={{ fontSize: { xs: '1.75rem', md: '2.5rem' } }}
+                                    >
+                                        {selectedProduct.price?.toLocaleString()} ₽
+                                    </Typography>
 
                                     {/* Описание */}
                                     <Box sx={{ mb: 3, flexGrow: 1 }}>
@@ -686,6 +788,189 @@ function Home() {
                             }}
                         />
                     </Box>
+                </Box>
+            </Dialog>
+
+            {/* Fullscreen Gallery Dialog */}
+            <Dialog
+                open={galleryOpen}
+                onClose={closeGallery}
+                maxWidth={false}
+                fullScreen
+                PaperProps={{
+                    sx: {
+                        backgroundColor: 'rgba(0,0,0,0.95)',
+                    },
+                }}
+            >
+                <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                    {/* Крестик закрытия */}
+                    <IconButton
+                        onClick={closeGallery}
+                        sx={{
+                            position: 'absolute',
+                            top: 20,
+                            right: 20,
+                            zIndex: 10,
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            color: 'white',
+                            width: 48,
+                            height: 48,
+                            '&:hover': {
+                                bgcolor: 'rgba(255,255,255,0.3)',
+                            },
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+
+                    {/* Счетчик фото */}
+                    {selectedProduct?.img && selectedProduct.img.length > 1 && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 20,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                zIndex: 10,
+                                bgcolor: 'rgba(0,0,0,0.5)',
+                                color: 'white',
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 2,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                            }}
+                        >
+                            {galleryIndex + 1} / {selectedProduct.img.length}
+                        </Box>
+                    )}
+
+                    {/* Кнопка назад */}
+                    {selectedProduct?.img && selectedProduct.img.length > 1 && (
+                        <IconButton
+                            onClick={prevImage}
+                            sx={{
+                                position: 'absolute',
+                                left: 20,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                zIndex: 10,
+                                bgcolor: 'rgba(255,255,255,0.2)',
+                                color: 'white',
+                                width: 56,
+                                height: 56,
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.3)',
+                                },
+                            }}
+                        >
+                            <NavigateBeforeIcon sx={{ fontSize: 32 }} />
+                        </IconButton>
+                    )}
+
+                    {/* Кнопка вперед */}
+                    {selectedProduct?.img && selectedProduct.img.length > 1 && (
+                        <IconButton
+                            onClick={nextImage}
+                            sx={{
+                                position: 'absolute',
+                                right: 20,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                zIndex: 10,
+                                bgcolor: 'rgba(255,255,255,0.2)',
+                                color: 'white',
+                                width: 56,
+                                height: 56,
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.3)',
+                                },
+                            }}
+                        >
+                            <NavigateNextIcon sx={{ fontSize: 32 }} />
+                        </IconButton>
+                    )}
+
+                    {/* Контейнер фото с свайпом */}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            p: { xs: 2, sm: 4, md: 8 },
+                        }}
+                        onClick={closeGallery}
+                        onTouchStart={handleGalleryTouchStart}
+                        onTouchEnd={handleGalleryTouchEnd}
+                    >
+                        <Box
+                            component="img"
+                            src={selectedProduct?.img?.[galleryIndex]}
+                            alt={`${selectedProduct?.title} ${galleryIndex + 1}`}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                borderRadius: 2,
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                            }}
+                        />
+                    </Box>
+
+                    {/* Thumbnails внизу (если больше 1 фото) */}
+                    {selectedProduct?.img && selectedProduct.img.length > 1 && (
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{
+                                position: 'absolute',
+                                bottom: 20,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                zIndex: 10,
+                                maxWidth: '90%',
+                                overflowX: 'auto',
+                                pb: 1,
+                                '&::-webkit-scrollbar': { height: 4 },
+                                '&::-webkit-scrollbar-track': { bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 2 },
+                                '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.3)', borderRadius: 2 },
+                            }}
+                        >
+                            {selectedProduct.img.map((img, idx) => (
+                                <Box
+                                    key={idx}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setGalleryIndex(idx);
+                                    }}
+                                    sx={{
+                                        width: 60,
+                                        height: 60,
+                                        borderRadius: 1,
+                                        overflow: 'hidden',
+                                        cursor: 'pointer',
+                                        border: galleryIndex === idx ? '3px solid white' : '3px solid transparent',
+                                        opacity: galleryIndex === idx ? 1 : 0.6,
+                                        transition: 'all 0.2s',
+                                        flexShrink: 0,
+                                        '&:hover': {
+                                            opacity: 1,
+                                        },
+                                    }}
+                                >
+                                    <img
+                                        src={img}
+                                        alt={`Thumbnail ${idx + 1}`}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                </Box>
+                            ))}
+                        </Stack>
+                    )}
                 </Box>
             </Dialog>
         </>
