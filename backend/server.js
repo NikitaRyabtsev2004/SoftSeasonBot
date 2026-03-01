@@ -6,7 +6,10 @@ const path = require('path');
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+app.use(cors({
+    origin: ['https://softseason.ru'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Папка, где хранятся изображения

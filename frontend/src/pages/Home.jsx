@@ -60,7 +60,7 @@ function Home() {
 
     const [activeStep, setActiveStep] = useState(0);
     const [isPressing, setIsPressing] = useState(false);
-    const [galleryOpen, setGalleryOpen] = useState(false); // ДОБАВИТЬ - для полноэкранной галереи
+    const [galleryOpen, setGalleryOpen] = useState(false);
     const [galleryIndex, setGalleryIndex] = useState(0);
     const pressTimer = useRef(null);
     const touchStartX = useRef(0);
@@ -72,7 +72,7 @@ function Home() {
 
     useEffect(() => {
         if (selectedProduct) {
-            setActiveStep(0);
+            queueMicrotask(() => setActiveStep(0));
         }
     }, [selectedProduct]);
 
@@ -233,7 +233,7 @@ function Home() {
                                 fontWeight: 600,
                             }}
                         />
-                        {categories.map((cat) => (
+                        {categories?.map((cat) => (
                             <Chip
                                 key={cat}
                                 label={cat}
@@ -274,7 +274,7 @@ function Home() {
                                 gap: 2,
                             }}
                         >
-                            {products.map((product) => (
+                            {products?.map((product) => (
                                 <Card
                                     key={product.id}
                                     onClick={() => dispatch(setSelectedProduct(product))}

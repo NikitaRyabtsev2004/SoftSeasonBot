@@ -65,24 +65,32 @@ const productsSlice = createSlice({
                 state.loading = true;
             })
             .addCase(fetchCategories.fulfilled, (state, action) => {
-                state.categories = action.payload;
+                const data = Array.isArray(action.payload)
+                    ? action.payload
+                    : action.payload?.data || action.payload?.categories || [];
+                state.categories = data;
                 state.loading = false;
             })
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.error = action.error.message;
                 state.loading = false;
+                state.categories = [];
             })
             .addCase(fetchProducts.pending, (state) => {
                 state.loading = true;
             })
             .addCase(fetchProducts.fulfilled, (state, action) => {
-                state.items = action.payload;
+                const data = Array.isArray(action.payload)
+                    ? action.payload
+                    : action.payload?.data || action.payload?.products || action.payload?.items || [];
+                state.items = data;
                 state.loading = false;
                 state.currentPage = 1;
             })
             .addCase(fetchProducts.rejected, (state, action) => {
                 state.error = action.error.message;
                 state.loading = false;
+                state.items = [];
             });
     },
 });
@@ -96,8 +104,8 @@ export const {
     resetImageIndex,
 } = productsSlice.actions;
 
-export const selectProducts = (state) => state.products.items;
-export const selectCategories = (state) => state.products.categories;
+export const selectCategories = (state) => state.products.categories || [];
+export const selectProducts = (state) => state.products.items || [];
 export const selectCurrentCategory = (state) => state.products.currentCategory;
 export const selectSelectedProduct = (state) => state.products.selectedProduct;
 export const selectZoomedMaterial = (state) => state.products.zoomedMaterial;
